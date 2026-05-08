@@ -94,6 +94,7 @@ export default function RootLayout() {
           <Stack.Screen name="sign-up" options={{ title: 'Criar conta' }} />
           <Stack.Screen name="conversations" options={{ headerShown: false }} />
           <Stack.Screen name="contacts" options={{ headerShown: false }} />
+          <Stack.Screen name="profile" options={{ headerShown: false }} />
           <Stack.Screen name="chat/[conversationId]" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="auto" />

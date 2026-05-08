@@ -1,5 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { query } from "./_generated/server";
+import { ConvexError, v } from "convex/values";
+import { mutation, query } from "./_generated/server";
 
 function getDisplayName(user: { name?: string; email?: string }) {
   return user.name ?? user.email ?? "Usuario";
@@ -15,6 +16,29 @@ export const getCurrentUser = query({
     }
 
     return await ctx.db.get(userId);
+  },
+});
+
+export const updateProfile = mutation({
+  args: {
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+
+    if (!userId) {
+      throw new ConvexError("Usuario nao autenticado.");
+    }
+
+    const name = args.name.trim();
+
+    if (!name) {
+      throw new ConvexError("O nome nao pode ser vazio.");
+    }
+
+    await ctx.db.patch(userId, {
+      name,
+    });
   },
 });
 

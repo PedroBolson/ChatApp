@@ -42,17 +42,26 @@ export default function ConversationsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="bg-emerald-700 px-5 pb-4 pt-5">
-        <View className="flex-row items-center justify-between">
-          <View className="mr-4 flex-1">
-            <Text className="text-2xl font-bold text-white">Conversas</Text>
-          </View>
+        <Text className="text-2xl font-bold text-white">Conversas</Text>
+        <View className="mt-3 flex-row">
           <Button
             title="Contatos"
             onPress={() => router.push('/contacts')}
             variant="light"
-            className="mr-2 px-4 py-2"
+            className="mr-2 flex-1 px-3 py-2"
           />
-          <Button title="Sair" onPress={handleLogout} variant="light" className="px-4 py-2" />
+          <Button
+            title="Perfil"
+            onPress={() => router.push('/profile')}
+            variant="light"
+            className="mr-2 flex-1 px-3 py-2"
+          />
+          <Button
+            title="Sair"
+            onPress={handleLogout}
+            variant="light"
+            className="flex-1 px-3 py-2"
+          />
         </View>
       </View>
 
