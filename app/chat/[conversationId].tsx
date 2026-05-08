@@ -72,79 +72,81 @@ export default function ChatScreen() {
   const title = conversationTitle ?? 'Conversa';
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-100" edges={['top', 'left', 'right', 'bottom']}>
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <View className="flex-row items-center bg-emerald-700 px-3 py-3">
-          <Pressable
-            className="mr-2 h-10 w-10 items-center justify-center rounded-full active:bg-emerald-800"
-            onPress={() => router.back()}
-          >
-            <Text className="text-2xl leading-7 text-white">{'<'}</Text>
-          </Pressable>
-          <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-            <Text className="text-base font-bold text-emerald-700">
-              {title.charAt(0).toUpperCase()}
+    <SafeAreaView className="flex-1 bg-emerald-700" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-slate-100" edges={['left', 'right', 'bottom']}>
+        <KeyboardAvoidingView
+          className="flex-1 bg-slate-100"
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View className="flex-row items-center bg-emerald-700 px-3 py-3">
+            <Pressable
+              className="mr-2 h-10 w-10 items-center justify-center rounded-full active:bg-emerald-800"
+              onPress={() => router.back()}
+            >
+              <Text className="text-2xl leading-7 text-white">{'<'}</Text>
+            </Pressable>
+            <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
+              <Text className="text-base font-bold text-emerald-700">
+                {title.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <Text className="flex-1 text-lg font-semibold text-white" numberOfLines={1}>
+              {title}
             </Text>
           </View>
-          <Text className="flex-1 text-lg font-semibold text-white" numberOfLines={1}>
-            {title}
-          </Text>
-        </View>
 
-        {messages === undefined ? (
-          <LoadingState message="Carregando mensagens..." />
-        ) : (
-          <FlatList
-            ref={messagesListRef}
-            data={messages}
-            keyExtractor={(item) => item._id}
-            contentContainerClassName="flex-grow px-4 py-4"
-            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-            keyboardShouldPersistTaps="handled"
-            onContentSizeChange={() => {
-              messagesListRef.current?.scrollToEnd({ animated: true });
-            }}
-            ListEmptyComponent={
-              <EmptyState
-                title="Nenhuma mensagem ainda"
-                message="Envie a primeira mensagem para testar o realtime do Convex."
-              />
-            }
-            renderItem={({ item }) => (
-              <ChatBubble
-                text={item.text}
-                senderName={item.senderName}
-                createdAt={item._creationTime}
-                isMine={item.isMine}
-                status={item.status}
-              />
-            )}
-          />
-        )}
+          {messages === undefined ? (
+            <LoadingState message="Carregando mensagens..." />
+          ) : (
+            <FlatList
+              ref={messagesListRef}
+              data={messages}
+              keyExtractor={(item) => item._id}
+              contentContainerClassName="flex-grow px-4 py-4"
+              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+              keyboardShouldPersistTaps="handled"
+              onContentSizeChange={() => {
+                messagesListRef.current?.scrollToEnd({ animated: true });
+              }}
+              ListEmptyComponent={
+                <EmptyState
+                  title="Nenhuma mensagem ainda"
+                  message="Envie a primeira mensagem para testar o realtime do Convex."
+                />
+              }
+              renderItem={({ item }) => (
+                <ChatBubble
+                  text={item.text}
+                  senderName={item.senderName}
+                  createdAt={item._creationTime}
+                  isMine={item.isMine}
+                  status={item.status}
+                />
+              )}
+            />
+          )}
 
-        <View className="flex-row items-end border-t border-slate-200 bg-white px-3 py-2">
-          <TextInput
-            className="mr-2 max-h-28 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900"
-            value={text}
-            onChangeText={setText}
-            placeholder="Mensagem"
-            placeholderTextColor="#94a3b8"
-            multiline
-          />
-          <Pressable
-            className={`h-12 min-w-16 items-center justify-center rounded-2xl px-4 ${
-              trimmedText && !isSending ? 'bg-emerald-600 active:bg-emerald-700' : 'bg-slate-300'
-            }`}
-            onPress={handleSendMessage}
-            disabled={!trimmedText || isSending}
-          >
-            <Text className="font-semibold text-white">{isSending ? '...' : 'Enviar'}</Text>
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
+          <View className="flex-row items-end border-t border-slate-200 bg-white px-3 py-2">
+            <TextInput
+              className="mr-2 max-h-28 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900"
+              value={text}
+              onChangeText={setText}
+              placeholder="Mensagem"
+              placeholderTextColor="#94a3b8"
+              multiline
+            />
+            <Pressable
+              className={`h-12 min-w-16 items-center justify-center rounded-2xl px-4 ${
+                trimmedText && !isSending ? 'bg-emerald-600 active:bg-emerald-700' : 'bg-slate-300'
+              }`}
+              onPress={handleSendMessage}
+              disabled={!trimmedText || isSending}
+            >
+              <Text className="font-semibold text-white">{isSending ? '...' : 'Enviar'}</Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </SafeAreaView>
   );
 }

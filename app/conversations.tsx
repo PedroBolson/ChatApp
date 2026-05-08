@@ -41,62 +41,64 @@ export default function ConversationsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="bg-emerald-700 px-5 pb-4 pt-5">
-        <Text className="text-2xl font-bold text-white">Conversas</Text>
-        <View className="mt-3 flex-row">
-          <Button
-            title="Contatos"
-            onPress={() => router.push('/contacts')}
-            variant="light"
-            className="mr-2 flex-1 px-3 py-2"
-          />
-          <Button
-            title="Perfil"
-            onPress={() => router.push('/profile')}
-            variant="light"
-            className="mr-2 flex-1 px-3 py-2"
-          />
-          <Button
-            title="Sair"
-            onPress={handleLogout}
-            variant="light"
-            className="flex-1 px-3 py-2"
-          />
+    <SafeAreaView className="flex-1 bg-emerald-700" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-white" edges={['left', 'right', 'bottom']}>
+        <View className="bg-emerald-700 px-5 pb-4 pt-5">
+          <Text className="text-2xl font-bold text-white">Conversas</Text>
+          <View className="mt-3 flex-row">
+            <Button
+              title="Contatos"
+              onPress={() => router.push('/contacts')}
+              variant="light"
+              className="mr-2 flex-1 px-3 py-2"
+            />
+            <Button
+              title="Perfil"
+              onPress={() => router.push('/profile')}
+              variant="light"
+              className="mr-2 flex-1 px-3 py-2"
+            />
+            <Button
+              title="Sair"
+              onPress={handleLogout}
+              variant="light"
+              className="flex-1 px-3 py-2"
+            />
+          </View>
         </View>
-      </View>
 
-      <View className="flex-1 bg-white">
-        {conversations === undefined ? (
-          <LoadingState message="Carregando conversas..." />
-        ) : (
-          <FlatList
-            data={conversations}
-            keyExtractor={(item) => item._id}
-            contentContainerClassName="flex-grow py-2"
-            ListEmptyComponent={
-              <EmptyState
-                title="Nenhuma conversa encontrada"
-                message="A conversa da turma sera criada automaticamente quando o app carregar."
-              />
-            }
-            renderItem={({ item }) => (
-              <ConversationItem
-                title={item.title}
-                lastMessageText={item.lastMessageText}
-                lastMessageAt={item.lastMessageAt}
-                unreadCount={item.unreadCount}
-                onPress={() =>
-                  router.push({
-                    pathname: '/chat/[conversationId]',
-                    params: { conversationId: item._id, title: item.title },
-                  })
-                }
-              />
-            )}
-          />
-        )}
-      </View>
+        <View className="flex-1 bg-white">
+          {conversations === undefined ? (
+            <LoadingState message="Carregando conversas..." />
+          ) : (
+            <FlatList
+              data={conversations}
+              keyExtractor={(item) => item._id}
+              contentContainerClassName="flex-grow py-2"
+              ListEmptyComponent={
+                <EmptyState
+                  title="Nenhuma conversa encontrada"
+                  message="A conversa da turma sera criada automaticamente quando o app carregar."
+                />
+              }
+              renderItem={({ item }) => (
+                <ConversationItem
+                  title={item.title}
+                  lastMessageText={item.lastMessageText}
+                  lastMessageAt={item.lastMessageAt}
+                  unreadCount={item.unreadCount}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/chat/[conversationId]',
+                      params: { conversationId: item._id, title: item.title },
+                    })
+                  }
+                />
+              )}
+            />
+          )}
+        </View>
+      </SafeAreaView>
     </SafeAreaView>
   );
 }

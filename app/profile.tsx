@@ -57,58 +57,62 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-row items-center bg-emerald-700 px-3 py-3">
-        <Pressable
-          className="mr-2 h-10 w-10 items-center justify-center rounded-full active:bg-emerald-800"
-          onPress={() => router.back()}
-        >
-          <Text className="text-2xl leading-7 text-white">{'<'}</Text>
-        </Pressable>
-        <Text className="flex-1 text-xl font-bold text-white">Perfil</Text>
-      </View>
-
-      {currentUser === undefined ? (
-        <LoadingState message="Carregando perfil..." />
-      ) : (
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <ScrollView
-            contentContainerClassName="px-5 py-6"
-            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-            keyboardShouldPersistTaps="handled"
+    <SafeAreaView className="flex-1 bg-emerald-700" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-white" edges={['left', 'right', 'bottom']}>
+        <View className="flex-row items-center bg-emerald-700 px-3 py-3">
+          <Pressable
+            className="mr-2 h-10 w-10 items-center justify-center rounded-full active:bg-emerald-800"
+            onPress={() => router.back()}
           >
-            <View className="mb-6 h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-              <Text className="text-2xl font-bold text-emerald-700">
-                {(name || currentUser?.email || 'U').charAt(0).toUpperCase()}
-              </Text>
-            </View>
+            <Text className="text-2xl leading-7 text-white">{'<'}</Text>
+          </Pressable>
+          <Text className="flex-1 text-xl font-bold text-white">Perfil</Text>
+        </View>
 
-            <Input
-              label="Nome de exibicao"
-              value={name}
-              onChangeText={setName}
-              placeholder="Digite seu nome"
-              autoCapitalize="words"
-              returnKeyType="done"
-            />
-
-            <View className="mb-4">
-              <Text className="mb-2 text-sm font-medium text-slate-700">Email</Text>
-              <View className="rounded-xl border border-slate-200 bg-slate-100 px-4 py-3">
-                <Text className="text-base text-slate-600">{currentUser?.email ?? 'Sem email'}</Text>
+        {currentUser === undefined ? (
+          <LoadingState message="Carregando perfil..." />
+        ) : (
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <ScrollView
+              contentContainerClassName="px-5 py-6"
+              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View className="mb-6 h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                <Text className="text-2xl font-bold text-emerald-700">
+                  {(name || currentUser?.email || 'U').charAt(0).toUpperCase()}
+                </Text>
               </View>
-            </View>
 
-            {message ? <Text className="mb-4 text-sm text-slate-600">{message}</Text> : null}
+              <Input
+                label="Nome de exibicao"
+                value={name}
+                onChangeText={setName}
+                placeholder="Digite seu nome"
+                autoCapitalize="words"
+                returnKeyType="done"
+              />
 
-            <Button title="Salvar" onPress={handleSave} loading={saving} className="mb-3" />
-            <Button title="Sair" onPress={handleLogout} variant="secondary" />
-          </ScrollView>
-        </KeyboardAvoidingView>
-      )}
+              <View className="mb-4">
+                <Text className="mb-2 text-sm font-medium text-slate-700">Email</Text>
+                <View className="rounded-xl border border-slate-200 bg-slate-100 px-4 py-3">
+                  <Text className="text-base text-slate-600">
+                    {currentUser?.email ?? 'Sem email'}
+                  </Text>
+                </View>
+              </View>
+
+              {message ? <Text className="mb-4 text-sm text-slate-600">{message}</Text> : null}
+
+              <Button title="Salvar" onPress={handleSave} loading={saving} className="mb-3" />
+              <Button title="Sair" onPress={handleLogout} variant="secondary" />
+            </ScrollView>
+          </KeyboardAvoidingView>
+        )}
+      </SafeAreaView>
     </SafeAreaView>
   );
 }
