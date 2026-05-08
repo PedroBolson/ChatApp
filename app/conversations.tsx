@@ -40,53 +40,52 @@ export default function ConversationsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
-      <View className="bg-emerald-700 px-5 pb-6 pt-5">
-        <View className="flex-row items-start justify-between">
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="bg-emerald-700 px-5 pb-4 pt-5">
+        <View className="flex-row items-center justify-between">
           <View className="mr-4 flex-1">
             <Text className="text-2xl font-bold text-white">Conversas</Text>
-            <Text className="mt-1 text-sm text-emerald-100">
-              Chat simples usando Expo, NativeWind e Convex.
-            </Text>
           </View>
           <Button title="Sair" onPress={handleLogout} variant="light" className="px-4 py-2" />
         </View>
       </View>
 
-      <View className="-mt-3 flex-1 rounded-t-3xl bg-slate-50">
-        <FlatList
-          data={conversations ?? []}
-          keyExtractor={(item) => item._id}
-          contentContainerClassName="px-4 py-5"
-          ListHeaderComponent={
-            <Text className="mb-3 text-sm font-semibold uppercase text-slate-500">
-              Minhas conversas
-            </Text>
-          }
-          ListEmptyComponent={
-            <View className="items-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12">
-              <Text className="text-center text-base font-semibold text-slate-700">
-                Nenhuma conversa encontrada
-              </Text>
-              <Text className="mt-2 text-center text-sm leading-5 text-slate-500">
-                A conversa da turma sera criada automaticamente quando o Convex carregar.
-              </Text>
-            </View>
-          }
-          renderItem={({ item }) => (
-            <ConversationItem
-              title={item.title}
-              lastMessageText={item.lastMessageText}
-              lastMessageAt={item.lastMessageAt}
-              onPress={() =>
-                router.push({
-                  pathname: '/chat/[conversationId]',
-                  params: { conversationId: item._id },
-                })
-              }
-            />
-          )}
-        />
+      <View className="flex-1 bg-white">
+        {conversations === undefined ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator color="#059669" />
+            <Text className="mt-3 text-slate-500">Carregando conversas...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={conversations}
+            keyExtractor={(item) => item._id}
+            contentContainerClassName="py-2"
+            ListEmptyComponent={
+              <View className="mx-4 mt-8 items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12">
+                <Text className="text-center text-base font-semibold text-slate-700">
+                  Nenhuma conversa encontrada
+                </Text>
+                <Text className="mt-2 text-center text-sm leading-5 text-slate-500">
+                  A conversa da turma sera criada automaticamente quando o Convex carregar.
+                </Text>
+              </View>
+            }
+            renderItem={({ item }) => (
+              <ConversationItem
+                title={item.title}
+                lastMessageText={item.lastMessageText}
+                lastMessageAt={item.lastMessageAt}
+                onPress={() =>
+                  router.push({
+                    pathname: '/chat/[conversationId]',
+                    params: { conversationId: item._id, title: item.title },
+                  })
+                }
+              />
+            )}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
