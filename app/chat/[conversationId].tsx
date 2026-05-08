@@ -3,7 +3,7 @@ import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useMutation, useQuery } from 'convex/react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -25,9 +25,16 @@ export default function ChatScreen() {
   const typedConversationId = conversationId as Id<'conversations'>;
   const [text, setText] = useState('');
   const sendMessage = useMutation(api.messages.sendMessage);
+  const markAsRead = useMutation(api.conversations.markAsRead);
   const messages = useQuery(api.messages.listByConversation, {
     conversationId: typedConversationId,
   });
+
+  useEffect(() => {
+    void markAsRead({
+      conversationId: typedConversationId,
+    });
+  }, [markAsRead, typedConversationId, messages?.length]);
 
   async function handleSendMessage() {
     const messageText = text.trim();
@@ -97,6 +104,7 @@ export default function ChatScreen() {
                 senderName={item.senderName}
                 createdAt={item._creationTime}
                 isMine={item.isMine}
+                status={item.status}
               />
             )}
           />

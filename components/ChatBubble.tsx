@@ -5,6 +5,7 @@ type ChatBubbleProps = {
   senderName: string;
   createdAt: number;
   isMine: boolean;
+  status?: 'sent' | 'delivered' | 'read';
 };
 
 function formatTime(timestamp: number) {
@@ -14,7 +15,23 @@ function formatTime(timestamp: number) {
   });
 }
 
-export default function ChatBubble({ text, senderName, createdAt, isMine }: ChatBubbleProps) {
+function getStatusText(status?: ChatBubbleProps['status']) {
+  if (!status) {
+    return '';
+  }
+
+  return status === 'sent' ? '✓' : '✓✓';
+}
+
+export default function ChatBubble({
+  text,
+  senderName,
+  createdAt,
+  isMine,
+  status,
+}: ChatBubbleProps) {
+  const statusText = getStatusText(status);
+
   return (
     <View className={`mb-2 max-w-[82%] ${isMine ? 'self-end' : 'self-start'}`}>
       {!isMine ? (
@@ -26,13 +43,20 @@ export default function ChatBubble({ text, senderName, createdAt, isMine }: Chat
         }`}
       >
         <Text className={`text-base leading-5 ${isMine ? 'text-white' : 'text-slate-900'}`}>{text}</Text>
-        <Text
-          className={`mt-1 self-end text-[11px] ${
-            isMine ? 'text-emerald-100' : 'text-slate-500'
-          }`}
-        >
-          {formatTime(createdAt)}
-        </Text>
+        <View className="mt-1 flex-row items-center self-end">
+          <Text className={`text-[11px] ${isMine ? 'text-emerald-100' : 'text-slate-500'}`}>
+            {formatTime(createdAt)}
+          </Text>
+          {isMine && statusText ? (
+            <Text
+              className={`ml-1 text-[11px] font-semibold ${
+                status === 'read' ? 'text-sky-200' : 'text-emerald-100'
+              }`}
+            >
+              {statusText}
+            </Text>
+          ) : null}
+        </View>
       </View>
     </View>
   );

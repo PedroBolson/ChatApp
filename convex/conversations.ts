@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { mutation, query, type MutationCtx } from "./_generated/server";
 
 const classConversationSlug = "class-chat";
 
@@ -10,6 +11,25 @@ function getPrivateConversationKey(userA: string, userB: string) {
 
 function getDisplayName(user: { name?: string; email?: string }) {
   return user.name ?? user.email ?? "Usuario";
+}
+
+async function requireConversationParticipant(
+  ctx: MutationCtx,
+  conversationId: Id<"conversations">,
+) {
+  const userId = await getAuthUserId(ctx);
+
+  if (!userId) {
+    throw new ConvexError("Usuario nao autenticado.");
+  }
+
+  const conversation = await ctx.db.get(conversationId);
+
+  if (!conversation || !conversation.participantIds.includes(userId)) {
+    throw new ConvexError("Conversa nao encontrada.");
+  }
+
+  return { userId, conversation };
 }
 
 export const getOrCreateClassConversation = mutation({
@@ -124,8 +144,26 @@ export const listMyConversations = query({
 
     return await Promise.all(
       myConversations.map(async (conversation) => {
+        const read = await ctx.db
+          .query("conversationReads")
+          .withIndex("by_user_conversation", (q) =>
+            q.eq("userId", userId).eq("conversationId", conversation._id),
+          )
+          .unique();
+        const lastReadAt = read?.lastReadAt ?? 0;
+        const messages = await ctx.db
+          .query("messages")
+          .withIndex("by_conversation", (q) => q.eq("conversationId", conversation._id))
+          .collect();
+        const unreadCount = messages.filter(
+          (message) => message._creationTime > lastReadAt && message.senderId !== userId,
+        ).length;
+
         if (!conversation.privateKey || conversation.participantIds.length !== 2) {
-          return conversation;
+          return {
+            ...conversation,
+            unreadCount,
+          };
         }
 
         const otherUserId = conversation.participantIds.find((participantId) => participantId !== userId);
@@ -134,8 +172,38 @@ export const listMyConversations = query({
         return {
           ...conversation,
           title: otherUser ? getDisplayName(otherUser) : conversation.title,
+          unreadCount,
         };
       }),
     );
+  },
+});
+
+export const markAsRead = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const { userId } = await requireConversationParticipant(ctx, args.conversationId);
+    const existingRead = await ctx.db
+      .query("conversationReads")
+      .withIndex("by_user_conversation", (q) =>
+        q.eq("userId", userId).eq("conversationId", args.conversationId),
+      )
+      .unique();
+
+    if (existingRead) {
+      await ctx.db.patch(existingRead._id, {
+        lastReadAt: Date.now(),
+      });
+
+      return existingRead._id;
+    }
+
+    return await ctx.db.insert("conversationReads", {
+      conversationId: args.conversationId,
+      userId,
+      lastReadAt: Date.now(),
+    });
   },
 });

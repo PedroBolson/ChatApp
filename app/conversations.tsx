@@ -82,6 +82,7 @@ export default function ConversationsScreen() {
                 title={item.title}
                 lastMessageText={item.lastMessageText}
                 lastMessageAt={item.lastMessageAt}
+                unreadCount={item.unreadCount}
                 onPress={() =>
                   router.push({
                     pathname: '/chat/[conversationId]',

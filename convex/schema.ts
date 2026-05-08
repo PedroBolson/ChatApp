@@ -20,4 +20,9 @@ export default defineSchema({
     senderId: v.id("users"),
     text: v.string(),
   }).index("by_conversation", ["conversationId"]),
+  conversationReads: defineTable({
+    conversationId: v.id("conversations"),
+    userId: v.id("users"),
+    lastReadAt: v.number(),
+  }).index("by_user_conversation", ["userId", "conversationId"]),
 });

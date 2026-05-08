@@ -3,6 +3,8 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 
+type MessageStatus = "sent" | "delivered" | "read";
+
 async function requireConversationParticipant(
   ctx: QueryCtx | MutationCtx,
   conversationId: Id<"conversations">,
@@ -27,20 +29,45 @@ export const listByConversation = query({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args) => {
-    const { userId } = await requireConversationParticipant(ctx, args.conversationId);
+    const { userId, conversation } = await requireConversationParticipant(ctx, args.conversationId);
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
       .collect();
+    const otherParticipantIds = conversation.participantIds.filter(
+      (participantId) => participantId !== userId,
+    );
+    const otherReads = await Promise.all(
+      otherParticipantIds.map((participantId) =>
+        ctx.db
+          .query("conversationReads")
+          .withIndex("by_user_conversation", (q) =>
+            q.eq("userId", participantId).eq("conversationId", args.conversationId),
+          )
+          .unique(),
+      ),
+    );
 
     return await Promise.all(
       messages.map(async (message) => {
         const sender = await ctx.db.get(message.senderId);
+        const isMine = message.senderId === userId;
+        const wasReadByOthers =
+          otherReads.length > 0 &&
+          otherReads.every((read) => read && read.lastReadAt >= message._creationTime);
+        const status: MessageStatus | undefined = isMine
+          ? wasReadByOthers
+            ? "read"
+            : conversation.privateKey
+              ? "delivered"
+              : "sent"
+          : undefined;
 
         return {
           ...message,
           senderName: sender?.name ?? sender?.email ?? "Usuario",
-          isMine: message.senderId === userId,
+          isMine,
+          status,
         };
       }),
     );
