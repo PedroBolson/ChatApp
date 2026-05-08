@@ -7,11 +7,14 @@ export default defineSchema({
   conversations: defineTable({
     title: v.string(),
     slug: v.optional(v.string()),
+    privateKey: v.optional(v.string()),
     participantIds: v.array(v.id("users")),
     createdBy: v.id("users"),
     lastMessageText: v.optional(v.string()),
     lastMessageAt: v.optional(v.number()),
-  }).index("by_slug", ["slug"]),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_private_key", ["privateKey"]),
   messages: defineTable({
     conversationId: v.id("conversations"),
     senderId: v.id("users"),
