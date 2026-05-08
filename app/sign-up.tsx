@@ -51,8 +51,15 @@ export default function SignUpScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerClassName="flex-grow px-6 pb-8 pt-14">
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerClassName="flex-grow px-6 pb-8 pt-14"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          keyboardShouldPersistTaps="handled"
+        >
           <View className="mb-7">
             <Text className="text-3xl font-bold text-slate-900">Criar conta</Text>
             <Text className="mt-2 text-base leading-6 text-slate-600">
@@ -61,7 +68,13 @@ export default function SignUpScreen() {
           </View>
 
           <View className="rounded-2xl border border-slate-200 bg-white p-5">
-            <Input label="Nome" value={name} onChangeText={setName} placeholder="Seu nome" />
+            <Input
+              label="Nome"
+              value={name}
+              onChangeText={setName}
+              placeholder="Seu nome"
+              returnKeyType="next"
+            />
             <Input
               label="Email"
               value={email}
@@ -70,6 +83,7 @@ export default function SignUpScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               placeholder="seu@email.com"
+              returnKeyType="next"
             />
             <Input
               label="Senha"
@@ -77,6 +91,8 @@ export default function SignUpScreen() {
               onChangeText={setPassword}
               secureTextEntry
               placeholder="Minimo de 8 caracteres"
+              returnKeyType="done"
+              onSubmitEditing={handleSignUp}
             />
 
             {error ? (

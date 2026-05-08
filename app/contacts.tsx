@@ -1,11 +1,13 @@
 import ContactItem from '@/components/ContactItem';
+import EmptyState from '@/components/EmptyState';
+import LoadingState from '@/components/LoadingState';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useConvexAuth } from '@convex-dev/auth/react';
 import { useMutation, useQuery } from 'convex/react';
 import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Pressable, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ContactsScreen() {
@@ -38,9 +40,8 @@ export default function ContactsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator color="#059669" />
-        <Text className="mt-3 text-slate-500">Carregando contatos...</Text>
+      <SafeAreaView className="flex-1 bg-white">
+        <LoadingState message="Carregando contatos..." />
       </SafeAreaView>
     );
   }
@@ -62,24 +63,17 @@ export default function ContactsScreen() {
       </View>
 
       {contacts === undefined ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#059669" />
-          <Text className="mt-3 text-slate-500">Carregando contatos...</Text>
-        </View>
+        <LoadingState message="Carregando contatos..." />
       ) : (
         <FlatList
           data={contacts}
           keyExtractor={(item) => item._id}
-          contentContainerClassName="py-2"
+          contentContainerClassName="flex-grow py-2"
           ListEmptyComponent={
-            <View className="mx-4 mt-8 items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12">
-              <Text className="text-center text-base font-semibold text-slate-700">
-                Nenhum contato encontrado
-              </Text>
-              <Text className="mt-2 text-center text-sm leading-5 text-slate-500">
-                Cadastre outro usuario para iniciar uma conversa privada.
-              </Text>
-            </View>
+            <EmptyState
+              title="Nenhum contato encontrado"
+              message="Cadastre outro usuario para iniciar uma conversa privada."
+            />
           }
           renderItem={({ item }) => (
             <ContactItem

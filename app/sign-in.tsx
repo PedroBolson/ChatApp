@@ -44,8 +44,15 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerClassName="flex-grow px-6 pb-8 pt-14">
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerClassName="flex-grow px-6 pb-8 pt-14"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          keyboardShouldPersistTaps="handled"
+        >
           <View className="mb-7">
             <Text className="text-3xl font-bold text-slate-900">ChatApp</Text>
             <Text className="mt-2 text-base leading-6 text-slate-600">
@@ -62,6 +69,7 @@ export default function SignInScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               placeholder="seu@email.com"
+              returnKeyType="next"
             />
             <Input
               label="Senha"
@@ -69,6 +77,8 @@ export default function SignInScreen() {
               onChangeText={setPassword}
               secureTextEntry
               placeholder="Sua senha"
+              returnKeyType="done"
+              onSubmitEditing={handleSignIn}
             />
 
             {error ? (

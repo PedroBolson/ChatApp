@@ -1,11 +1,12 @@
 import ChatBubble from '@/components/ChatBubble';
+import EmptyState from '@/components/EmptyState';
+import LoadingState from '@/components/LoadingState';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useMutation, useQuery } from 'convex/react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -23,12 +24,15 @@ export default function ChatScreen() {
     title?: string;
   }>();
   const typedConversationId = conversationId as Id<'conversations'>;
+  const messagesListRef = useRef<FlatList>(null);
   const [text, setText] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const sendMessage = useMutation(api.messages.sendMessage);
   const markAsRead = useMutation(api.conversations.markAsRead);
   const messages = useQuery(api.messages.listByConversation, {
     conversationId: typedConversationId,
   });
+  const trimmedText = text.trim();
 
   useEffect(() => {
     void markAsRead({
@@ -36,18 +40,33 @@ export default function ChatScreen() {
     });
   }, [markAsRead, typedConversationId, messages?.length]);
 
-  async function handleSendMessage() {
-    const messageText = text.trim();
-
-    if (!messageText) {
+  useEffect(() => {
+    if (!messages?.length) {
       return;
     }
 
-    setText('');
-    await sendMessage({
-      conversationId: typedConversationId,
-      text: messageText,
+    requestAnimationFrame(() => {
+      messagesListRef.current?.scrollToEnd({ animated: true });
     });
+  }, [messages?.length]);
+
+  async function handleSendMessage() {
+    if (!trimmedText || isSending) {
+      return;
+    }
+
+    const messageText = trimmedText;
+    setText('');
+    setIsSending(true);
+
+    try {
+      await sendMessage({
+        conversationId: typedConversationId,
+        text: messageText,
+      });
+    } finally {
+      setIsSending(false);
+    }
   }
 
   const title = conversationTitle ?? 'Conversa';
@@ -56,7 +75,7 @@ export default function ChatScreen() {
     <SafeAreaView className="flex-1 bg-slate-100" edges={['top', 'left', 'right', 'bottom']}>
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View className="flex-row items-center bg-emerald-700 px-3 py-3">
           <Pressable
@@ -76,27 +95,23 @@ export default function ChatScreen() {
         </View>
 
         {messages === undefined ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator color="#059669" />
-            <Text className="mt-3 text-slate-500">Carregando mensagens...</Text>
-          </View>
+          <LoadingState message="Carregando mensagens..." />
         ) : (
           <FlatList
+            ref={messagesListRef}
             data={messages}
             keyExtractor={(item) => item._id}
             contentContainerClassName="flex-grow px-4 py-4"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             keyboardShouldPersistTaps="handled"
+            onContentSizeChange={() => {
+              messagesListRef.current?.scrollToEnd({ animated: true });
+            }}
             ListEmptyComponent={
-              <View className="flex-1 items-center justify-center px-8">
-                <View className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-8">
-                  <Text className="text-center text-base font-semibold text-slate-700">
-                    Nenhuma mensagem ainda
-                  </Text>
-                  <Text className="mt-2 text-center text-sm leading-5 text-slate-500">
-                    Envie a primeira mensagem para testar o realtime do Convex.
-                  </Text>
-                </View>
-              </View>
+              <EmptyState
+                title="Nenhuma mensagem ainda"
+                message="Envie a primeira mensagem para testar o realtime do Convex."
+              />
             }
             renderItem={({ item }) => (
               <ChatBubble
@@ -121,12 +136,12 @@ export default function ChatScreen() {
           />
           <Pressable
             className={`h-12 min-w-16 items-center justify-center rounded-2xl px-4 ${
-              text.trim() ? 'bg-emerald-600 active:bg-emerald-700' : 'bg-slate-300'
+              trimmedText && !isSending ? 'bg-emerald-600 active:bg-emerald-700' : 'bg-slate-300'
             }`}
             onPress={handleSendMessage}
-            disabled={!text.trim()}
+            disabled={!trimmedText || isSending}
           >
-            <Text className="font-semibold text-white">Enviar</Text>
+            <Text className="font-semibold text-white">{isSending ? '...' : 'Enviar'}</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

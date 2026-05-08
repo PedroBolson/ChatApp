@@ -1,11 +1,13 @@
 import { useAuthActions, useConvexAuth } from '@convex-dev/auth/react';
 import Button from '@/components/Button';
 import ConversationItem from '@/components/ConversationItem';
+import EmptyState from '@/components/EmptyState';
+import LoadingState from '@/components/LoadingState';
 import { api } from '@/convex/_generated/api';
 import { useMutation, useQuery } from 'convex/react';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ConversationsScreen() {
@@ -28,9 +30,8 @@ export default function ConversationsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-slate-50">
-        <ActivityIndicator color="#059669" />
-        <Text className="mt-3 text-slate-500">Carregando conversas...</Text>
+      <SafeAreaView className="flex-1 bg-white">
+        <LoadingState message="Carregando conversas..." />
       </SafeAreaView>
     );
   }
@@ -67,24 +68,17 @@ export default function ConversationsScreen() {
 
       <View className="flex-1 bg-white">
         {conversations === undefined ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator color="#059669" />
-            <Text className="mt-3 text-slate-500">Carregando conversas...</Text>
-          </View>
+          <LoadingState message="Carregando conversas..." />
         ) : (
           <FlatList
             data={conversations}
             keyExtractor={(item) => item._id}
-            contentContainerClassName="py-2"
+            contentContainerClassName="flex-grow py-2"
             ListEmptyComponent={
-              <View className="mx-4 mt-8 items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12">
-                <Text className="text-center text-base font-semibold text-slate-700">
-                  Nenhuma conversa encontrada
-                </Text>
-                <Text className="mt-2 text-center text-sm leading-5 text-slate-500">
-                  A conversa da turma sera criada automaticamente quando o Convex carregar.
-                </Text>
-              </View>
+              <EmptyState
+                title="Nenhuma conversa encontrada"
+                message="A conversa da turma sera criada automaticamente quando o app carregar."
+              />
             }
             renderItem={({ item }) => (
               <ConversationItem
