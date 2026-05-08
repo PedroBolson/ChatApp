@@ -56,12 +56,6 @@ export default function ConversationsScreen() {
               title="Perfil"
               onPress={() => router.push('/profile')}
               variant="light"
-              className="mr-2 flex-1 px-3 py-2"
-            />
-            <Button
-              title="Sair"
-              onPress={handleLogout}
-              variant="light"
               className="flex-1 px-3 py-2"
             />
           </View>
@@ -80,6 +74,17 @@ export default function ConversationsScreen() {
                   title="Nenhuma conversa encontrada"
                   message="A conversa da turma sera criada automaticamente quando o app carregar."
                 />
+              }
+              ListFooterComponent={
+                <View className="border-t border-slate-100 px-5 py-5">
+                  <Button
+                    title="Sobre o ChatApp"
+                    onPress={() => router.push('/about')}
+                    variant="secondary"
+                    className="mb-3"
+                  />
+                  <Button title="Sair" onPress={handleLogout} variant="secondary" />
+                </View>
               }
               renderItem={({ item }) => (
                 <ConversationItem
