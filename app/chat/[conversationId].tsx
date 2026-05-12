@@ -15,9 +15,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ChatScreen() {
+  const { top, bottom } = useSafeAreaInsets();
   const router = useRouter();
   const { conversationId, title: conversationTitle } = useLocalSearchParams<{
     conversationId: string;
@@ -73,10 +74,11 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-emerald-700" edges={['top']}>
-      <SafeAreaView className="flex-1 bg-slate-100" edges={['left', 'right', 'bottom']}>
+      <SafeAreaView className="flex-1 bg-slate-100" edges={['left', 'right']}>
         <KeyboardAvoidingView
           className="flex-1 bg-slate-100"
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={top}
         >
           <View className="flex-row items-center bg-emerald-700 px-3 py-3">
             <Pressable
@@ -126,7 +128,10 @@ export default function ChatScreen() {
             />
           )}
 
-          <View className="flex-row items-end border-t border-slate-200 bg-white px-3 py-2">
+          <View
+            className="flex-row items-end border-t border-slate-200 bg-white px-3 pt-2"
+            style={{ paddingBottom: bottom + 8 }}
+          >
             <TextInput
               className="mr-2 max-h-28 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900"
               value={text}
