@@ -1,11 +1,14 @@
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 type ChatBubbleProps = {
   text: string;
   senderName: string;
   createdAt: number;
   isMine: boolean;
+  updatedAt?: number;
+  isDeleted?: boolean;
   status?: 'sent' | 'delivered' | 'read';
+  onLongPress?: () => void;
 };
 
 function formatTime(timestamp: number) {
@@ -28,36 +31,62 @@ export default function ChatBubble({
   senderName,
   createdAt,
   isMine,
+  updatedAt,
+  isDeleted,
   status,
+  onLongPress,
 }: ChatBubbleProps) {
   const statusText = getStatusText(status);
+  const displayText = isDeleted ? 'Mensagem apagada' : text;
 
   return (
-    <View className={`mb-2 max-w-[82%] ${isMine ? 'self-end' : 'self-start'}`}>
+    <Pressable
+      className={`mb-2 max-w-[82%] ${isMine ? 'self-end' : 'self-start'}`}
+      disabled={!onLongPress}
+      delayLongPress={350}
+      onLongPress={onLongPress}
+    >
       {!isMine ? (
         <Text className="mb-1 ml-1 text-xs font-semibold text-emerald-700">{senderName}</Text>
       ) : null}
       <View
         className={`rounded-2xl px-3 py-2 ${
-          isMine ? 'rounded-br-sm bg-emerald-600' : 'rounded-bl-sm bg-white'
+          isDeleted
+            ? 'bg-slate-200'
+            : isMine
+              ? 'rounded-br-sm bg-emerald-600'
+              : 'rounded-bl-sm bg-white'
         }`}
       >
-        <Text className={`text-base leading-5 ${isMine ? 'text-white' : 'text-slate-900'}`}>{text}</Text>
-        <View className="mt-1 flex-row items-center self-end">
-          <Text className={`text-[11px] ${isMine ? 'text-emerald-100' : 'text-slate-500'}`}>
-            {formatTime(createdAt)}
-          </Text>
-          {isMine && statusText ? (
-            <Text
-              className={`ml-1 text-[11px] font-semibold ${
-                status === 'read' ? 'text-sky-200' : 'text-emerald-100'
-              }`}
-            >
-              {statusText}
+        <Text
+          className={`text-base leading-5 ${
+            isDeleted ? 'italic text-slate-500' : isMine ? 'text-white' : 'text-slate-900'
+          }`}
+        >
+          {displayText}
+        </Text>
+        {!isDeleted ? (
+          <View className="mt-1 flex-row items-center self-end">
+            {updatedAt ? (
+              <Text className={`mr-2 text-[11px] ${isMine ? 'text-emerald-100' : 'text-slate-500'}`}>
+                editado
+              </Text>
+            ) : null}
+            <Text className={`text-[11px] ${isMine ? 'text-emerald-100' : 'text-slate-500'}`}>
+              {formatTime(createdAt)}
             </Text>
-          ) : null}
-        </View>
+            {isMine && statusText ? (
+              <Text
+                className={`ml-1 text-[11px] font-semibold ${
+                  status === 'read' ? 'text-sky-200' : 'text-emerald-100'
+                }`}
+              >
+                {statusText}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
       </View>
-    </View>
+    </Pressable>
   );
 }

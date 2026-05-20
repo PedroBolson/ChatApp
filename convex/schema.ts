@@ -19,6 +19,9 @@ export default defineSchema({
     conversationId: v.id("conversations"),
     senderId: v.id("users"),
     text: v.string(),
+    updatedAt: v.optional(v.number()),
+    isDeleted: v.optional(v.boolean()),
+    deletedAt: v.optional(v.number()),
   }).index("by_conversation", ["conversationId"]),
   conversationReads: defineTable({
     conversationId: v.id("conversations"),
