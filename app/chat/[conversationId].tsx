@@ -4,12 +4,15 @@ import LoadingState from '@/components/LoadingState';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useMutation, useQuery } from 'convex/react';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   Text,
@@ -24,6 +27,8 @@ type ChatMessage = {
   text: string;
   senderName: string;
   isMine: boolean;
+  type?: 'text' | 'image';
+  imageUrl?: string | null;
   updatedAt?: number;
   isDeleted?: boolean;
   status?: 'sent' | 'delivered' | 'read';
@@ -41,7 +46,11 @@ export default function ChatScreen() {
   const [text, setText] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<Id<'messages'> | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const sendMessage = useMutation(api.messages.sendMessage);
+  const generateUploadUrl = useMutation(api.messages.generateUploadUrl);
+  const sendImageMessage = useMutation(api.messages.sendImageMessage);
   const updateMessage = useMutation(api.messages.updateMessage);
   const deleteMessage = useMutation(api.messages.deleteMessage);
   const markAsRead = useMutation(api.conversations.markAsRead);
@@ -99,7 +108,7 @@ export default function ChatScreen() {
   }
 
   function startEditingMessage(message: ChatMessage) {
-    if (message.isDeleted) {
+    if (message.isDeleted || message.type === 'image') {
       return;
     }
 
@@ -124,24 +133,26 @@ export default function ChatScreen() {
     }
   }
 
-  function confirmDeleteMessage(id: Id<'messages'>) {
-    Alert.alert('Excluir mensagem?', 'Essa acao vai apagar o texto da mensagem.', [
-      {
-        text: 'Cancelar',
-        style: 'cancel',
-      },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: () => {
-          void handleDeleteMessage(id);
-        },
-      },
-    ]);
-  }
-
   function showMessageOptions(message: ChatMessage) {
     if (!message.isMine || message.isDeleted) {
+      return;
+    }
+
+    if (message.type === 'image') {
+      Alert.alert('O que deseja fazer?', undefined, [
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => {
+            void handleDeleteMessage(message._id);
+          },
+        },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+      ]);
+
       return;
     }
 
@@ -154,7 +165,7 @@ export default function ChatScreen() {
         text: 'Excluir',
         style: 'destructive',
         onPress: () => {
-          confirmDeleteMessage(message._id);
+          void handleDeleteMessage(message._id);
         },
       },
       {
@@ -162,6 +173,67 @@ export default function ChatScreen() {
         style: 'cancel',
       },
     ]);
+  }
+
+  async function handlePickImages() {
+    if (isUploading || isEditing) {
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert('Permissao necessaria', 'Permita o acesso a galeria para enviar fotos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        selectionLimit: 0,
+        quality: 1,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const imageCaption = trimmedText;
+
+      for (const [index, asset] of result.assets.entries()) {
+        const imageResponse = await fetch(asset.uri);
+        const imageBlob = await imageResponse.blob();
+        const uploadUrl = await generateUploadUrl();
+        const uploadResponse = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': asset.mimeType ?? 'image/jpeg',
+          },
+          body: imageBlob,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Upload failed');
+        }
+
+        const { storageId } = (await uploadResponse.json()) as { storageId: Id<'_storage'> };
+
+        await sendImageMessage({
+          conversationId: typedConversationId,
+          imageId: storageId,
+          text: index === 0 ? imageCaption : "",
+        });
+      }
+
+      setText('');
+    } catch {
+      Alert.alert('Erro', 'Nao foi possivel enviar a imagem.');
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   const title = conversationTitle ?? 'Conversa';
@@ -216,10 +288,17 @@ export default function ChatScreen() {
                   senderName={item.senderName}
                   createdAt={item._creationTime}
                   isMine={item.isMine}
+                  type={item.type ?? 'text'}
+                  imageUrl={item.imageUrl}
                   updatedAt={item.updatedAt}
                   isDeleted={item.isDeleted}
                   status={item.status}
-                  onLongPress={() => showMessageOptions(item)}
+                  onLongPress={!item.isDeleted ? () => showMessageOptions(item) : undefined}
+                  onImagePress={() => {
+                    if (item.imageUrl) {
+                      setSelectedImageUrl(item.imageUrl);
+                    }
+                  }}
                 />
               )}
             />
@@ -238,6 +317,17 @@ export default function ChatScreen() {
             className="flex-row items-end border-t border-slate-200 bg-white px-3 pt-2"
             style={{ paddingBottom: bottom + 8 }}
           >
+            <Pressable
+              className={`mr-2 h-12 items-center justify-center rounded-2xl px-3 ${
+                isUploading || isEditing ? 'bg-slate-300' : 'bg-emerald-100 active:bg-emerald-200'
+              }`}
+              onPress={handlePickImages}
+              disabled={isUploading || isEditing}
+            >
+              <Text className="font-semibold text-emerald-700">
+                {isUploading ? 'Enviando...' : 'Foto'}
+              </Text>
+            </Pressable>
             <TextInput
               className="mr-2 max-h-28 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900"
               value={text}
@@ -260,6 +350,27 @@ export default function ChatScreen() {
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <Modal
+        animationType="fade"
+        visible={selectedImageUrl !== null}
+        transparent
+        onRequestClose={() => setSelectedImageUrl(null)}
+      >
+        <View className="flex-1 bg-black px-4" style={{ paddingTop: top + 16, paddingBottom: bottom + 16 }}>
+          <Pressable className="self-end rounded-xl bg-white px-4 py-3" onPress={() => setSelectedImageUrl(null)}>
+            <Text className="font-semibold text-slate-900">Fechar</Text>
+          </Pressable>
+          <View className="flex-1 items-center justify-center">
+            {selectedImageUrl ? (
+              <Image
+                source={{ uri: selectedImageUrl }}
+                className="h-full w-full"
+                resizeMode="contain"
+              />
+            ) : null}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

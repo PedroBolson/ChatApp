@@ -1,14 +1,17 @@
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 
 type ChatBubbleProps = {
   text: string;
   senderName: string;
   createdAt: number;
   isMine: boolean;
+  type?: 'text' | 'image';
+  imageUrl?: string | null;
   updatedAt?: number;
   isDeleted?: boolean;
   status?: 'sent' | 'delivered' | 'read';
   onLongPress?: () => void;
+  onImagePress?: () => void;
 };
 
 function formatTime(timestamp: number) {
@@ -31,13 +34,18 @@ export default function ChatBubble({
   senderName,
   createdAt,
   isMine,
+  type,
+  imageUrl,
   updatedAt,
   isDeleted,
   status,
   onLongPress,
+  onImagePress,
 }: ChatBubbleProps) {
   const statusText = getStatusText(status);
   const displayText = isDeleted ? 'Mensagem apagada' : text;
+  const isImage = type === 'image';
+  const showEdited = !isDeleted && !isImage && updatedAt;
 
   return (
     <Pressable
@@ -58,16 +66,35 @@ export default function ChatBubble({
               : 'rounded-bl-sm bg-white'
         }`}
       >
-        <Text
-          className={`text-base leading-5 ${
-            isDeleted ? 'italic text-slate-500' : isMine ? 'text-white' : 'text-slate-900'
-          }`}
-        >
-          {displayText}
-        </Text>
+        {isDeleted ? (
+          <Text className="text-base italic leading-5 text-slate-500">{displayText}</Text>
+        ) : isImage ? (
+          imageUrl ? (
+            <Pressable delayLongPress={350} onLongPress={onLongPress} onPress={onImagePress}>
+              <Image
+                source={{ uri: imageUrl }}
+                className="h-56 w-56 rounded-xl bg-slate-200"
+                resizeMode="cover"
+              />
+              {text ? (
+                <Text className={`mt-2 text-base leading-5 ${isMine ? 'text-white' : 'text-slate-900'}`}>
+                  {text}
+                </Text>
+              ) : null}
+            </Pressable>
+          ) : (
+            <Text className={`text-base leading-5 ${isMine ? 'text-white' : 'text-slate-900'}`}>
+              Imagem indisponivel
+            </Text>
+          )
+        ) : (
+          <Text className={`text-base leading-5 ${isMine ? 'text-white' : 'text-slate-900'}`}>
+            {displayText}
+          </Text>
+        )}
         {!isDeleted ? (
           <View className="mt-1 flex-row items-center self-end">
-            {updatedAt ? (
+            {showEdited ? (
               <Text className={`mr-2 text-[11px] ${isMine ? 'text-emerald-100' : 'text-slate-500'}`}>
                 editado
               </Text>

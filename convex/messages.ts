@@ -51,6 +51,8 @@ export const listByConversation = query({
     return await Promise.all(
       messages.map(async (message) => {
         const sender = await ctx.db.get(message.senderId);
+        const imageUrl =
+          message.imageId && !message.isDeleted ? await ctx.storage.getUrl(message.imageId) : null;
         const isMine = message.senderId === userId;
         const wasReadByOthers =
           otherReads.length > 0 &&
@@ -65,6 +67,7 @@ export const listByConversation = query({
 
         return {
           ...message,
+          imageUrl,
           senderName: sender?.name ?? sender?.email ?? "Usuario",
           isMine,
           status,
@@ -91,11 +94,55 @@ export const sendMessage = mutation({
       conversationId: args.conversationId,
       senderId: userId,
       text,
+      type: "text",
+      createdAt: Date.now(),
     });
 
     await ctx.db.patch(args.conversationId, {
       lastMessageText: text,
       lastMessageAt: Date.now(),
+    });
+
+    return messageId;
+  },
+});
+
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+
+    if (!userId) {
+      throw new ConvexError("Usuario nao autenticado.");
+    }
+
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const sendImageMessage = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    imageId: v.id("_storage"),
+    text: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { userId } = await requireConversationParticipant(ctx, args.conversationId);
+    const createdAt = Date.now();
+    const text = args.text?.trim() ?? "";
+
+    const messageId = await ctx.db.insert("messages", {
+      conversationId: args.conversationId,
+      senderId: userId,
+      text,
+      imageId: args.imageId,
+      type: "image",
+      createdAt,
+    });
+
+    await ctx.db.patch(args.conversationId, {
+      lastMessageText: text || "Foto",
+      lastMessageAt: createdAt,
     });
 
     return messageId;
@@ -122,6 +169,10 @@ export const updateMessage = mutation({
 
     if (message.isDeleted) {
       throw new ConvexError("Nao e possivel editar mensagem apagada.");
+    }
+
+    if (message.type === "image") {
+      throw new ConvexError("Nao e possivel editar mensagem de imagem.");
     }
 
     const text = args.text.trim();
@@ -170,8 +221,13 @@ export const deleteMessage = mutation({
       return;
     }
 
+    if (message.imageId) {
+      await ctx.storage.delete(message.imageId);
+    }
+
     await ctx.db.patch(args.id, {
       text: "",
+      imageId: undefined,
       isDeleted: true,
       deletedAt: Date.now(),
     });
