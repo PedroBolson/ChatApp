@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, Pressable, Text, View } from 'react-native';
 
 type ChatBubbleProps = {
@@ -10,8 +11,11 @@ type ChatBubbleProps = {
   updatedAt?: number;
   isDeleted?: boolean;
   status?: 'sent' | 'delivered' | 'read';
+  isSpeaking?: boolean;
   onLongPress?: () => void;
   onImagePress?: () => void;
+  onSpeakPress?: () => void;
+  onStopSpeechPress?: () => void;
 };
 
 function formatTime(timestamp: number) {
@@ -39,18 +43,36 @@ export default function ChatBubble({
   updatedAt,
   isDeleted,
   status,
+  isSpeaking,
   onLongPress,
   onImagePress,
+  onSpeakPress,
+  onStopSpeechPress,
 }: ChatBubbleProps) {
   const statusText = getStatusText(status);
   const displayText = isDeleted ? 'Mensagem apagada' : text;
   const isImage = type === 'image';
   const showEdited = !isDeleted && !isImage && updatedAt;
+  const canSpeak = !isDeleted && (type ?? 'text') === 'text' && text.trim().length > 0;
+  const messageAccessibilityLabel = isDeleted
+    ? 'Mensagem apagada'
+    : isImage
+      ? text
+        ? `Imagem enviada na conversa. Legenda: ${text}`
+        : 'Imagem enviada na conversa'
+      : `${isMine ? 'Minha mensagem' : `Mensagem de ${senderName}`}: ${displayText}${
+          showEdited ? '. editado' : ''
+        }`;
+  const messageAccessibilityHint = onLongPress
+    ? 'Toque e segure para abrir opções da mensagem'
+    : undefined;
+  const imageAccessibilityHint = onLongPress
+    ? 'Toque duas vezes para abrir a imagem em tela cheia. Toque e segure para abrir opções da mensagem'
+    : 'Toque duas vezes para abrir a imagem em tela cheia';
 
   return (
     <Pressable
       className={`mb-2 max-w-[82%] ${isMine ? 'self-end' : 'self-start'}`}
-      disabled={!onLongPress}
       delayLongPress={350}
       onLongPress={onLongPress}
     >
@@ -67,14 +89,28 @@ export default function ChatBubble({
         }`}
       >
         {isDeleted ? (
-          <Text className="text-base italic leading-5 text-slate-500">{displayText}</Text>
+          <Text
+            className="text-base italic leading-5 text-slate-500"
+            accessibilityLabel="Mensagem apagada"
+          >
+            {displayText}
+          </Text>
         ) : isImage ? (
           imageUrl ? (
-            <Pressable delayLongPress={350} onLongPress={onLongPress} onPress={onImagePress}>
+            <Pressable
+              delayLongPress={350}
+              onLongPress={onLongPress}
+              onPress={onImagePress}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={messageAccessibilityLabel}
+              accessibilityHint={imageAccessibilityHint}
+            >
               <Image
                 source={{ uri: imageUrl }}
                 className="h-56 w-56 rounded-xl bg-slate-200"
                 resizeMode="cover"
+                accessibilityLabel="Imagem enviada na conversa"
               />
               {text ? (
                 <Text className={`mt-2 text-base leading-5 ${isMine ? 'text-white' : 'text-slate-900'}`}>
@@ -88,12 +124,36 @@ export default function ChatBubble({
             </Text>
           )
         ) : (
-          <Text className={`text-base leading-5 ${isMine ? 'text-white' : 'text-slate-900'}`}>
+          <Text
+            className={`text-base leading-5 ${isMine ? 'text-white' : 'text-slate-900'}`}
+            accessibilityLabel={messageAccessibilityLabel}
+            accessibilityHint={messageAccessibilityHint}
+          >
             {displayText}
           </Text>
         )}
         {!isDeleted ? (
           <View className="mt-1 flex-row items-center self-end">
+            {canSpeak ? (
+              <Pressable
+                className={`mr-2 rounded-full px-2 py-1 ${
+                  isMine ? 'bg-emerald-700 active:bg-emerald-800' : 'bg-slate-100 active:bg-slate-200'
+                }`}
+                onPress={isSpeaking ? onStopSpeechPress : onSpeakPress}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={isSpeaking ? 'Parar leitura da mensagem' : 'Ouvir mensagem'}
+                accessibilityHint={
+                  isSpeaking ? 'Interrompe a leitura da mensagem' : 'Lê esta mensagem em voz alta'
+                }
+              >
+                <Ionicons
+                  name={isSpeaking ? 'stop' : 'volume-high'}
+                  size={16}
+                  color={isMine ? '#ffffff' : '#047857'}
+                />
+              </Pressable>
+            ) : null}
             {showEdited ? (
               <Text className={`mr-2 text-[11px] ${isMine ? 'text-emerald-100' : 'text-slate-500'}`}>
                 editado

@@ -3,6 +3,7 @@ import EmptyState from '@/components/EmptyState';
 import LoadingState from '@/components/LoadingState';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useConvexAuth } from '@convex-dev/auth/react';
 import { useMutation, useQuery } from 'convex/react';
 import { Redirect, useRouter } from 'expo-router';
@@ -57,8 +58,12 @@ export default function ContactsScreen() {
           <Pressable
             className="mr-2 h-10 w-10 items-center justify-center rounded-full active:bg-emerald-800"
             onPress={() => router.back()}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            accessibilityHint="Volta para a tela anterior"
           >
-            <Text className="text-2xl leading-7 text-white">{'<'}</Text>
+            <Ionicons name="arrow-back" size={24} color="#ffffff" />
           </Pressable>
           <Text className="flex-1 text-2xl font-bold text-white">Contatos</Text>
         </View>

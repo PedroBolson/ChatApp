@@ -1,4 +1,5 @@
 import LoadingState from '@/components/LoadingState';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useConvexAuth } from '@convex-dev/auth/react';
 import { Redirect, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -58,8 +59,12 @@ export default function AboutScreen() {
           <Pressable
             className="mr-2 h-10 w-10 items-center justify-center rounded-full active:bg-emerald-800"
             onPress={() => router.back()}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            accessibilityHint="Volta para a tela anterior"
           >
-            <Text className="text-2xl leading-7 text-white">{'<'}</Text>
+            <Ionicons name="arrow-back" size={24} color="#ffffff" />
           </Pressable>
           <Text className="flex-1 text-xl font-bold text-white">Sobre o ChatApp</Text>
         </View>
